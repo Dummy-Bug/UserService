@@ -14,7 +14,7 @@ import user.service.UserService;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private UserService userService;
+    private final UserService userService;
 
     UserController(UserService userService) {
         this.userService = userService;
@@ -22,23 +22,13 @@ public class UserController {
 
     @PostMapping("/signup")
     public UserDto signUp(@RequestBody SignUpRequestDto requestDto) {
-        User user = userService.signUp(
-                requestDto.getEmail(),
-                requestDto.getName(),
-                requestDto.getPassword()
-        );
-
+        User user = userService.signUp(requestDto.getEmail(), requestDto.getName(), requestDto.getPassword());
         return UserDto.from(user);
     }
 
     @PostMapping("/login")
     public Token login(@RequestBody LoginRequestDto requestDto) {
-        Token token = userService.login(
-                requestDto.getEmail(),
-                requestDto.getPassword()
-        );
-
-        return token;
+        return userService.login(requestDto.getEmail(), requestDto.getPassword());
     }
 
     @PostMapping("/logout")
@@ -50,7 +40,6 @@ public class UserController {
     @GetMapping("/validate/{token}")
     public UserDto validateToken(@PathVariable String token) {
         User user = userService.validateToken(token);
-
         return UserDto.from(user);
     }
 
