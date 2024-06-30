@@ -33,15 +33,15 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody LogOutRequestDto requestDto) {
+    public ResponseEntity<Void> logout(@RequestBody LogOutRequestDto requestDto) throws Exception {
         userService.logout(requestDto.getToken());
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @GetMapping("/validate/{token}")
-    public UserDto validateToken(@PathVariable String token) {
+    public ResponseEntity<UserDto> validateToken(@PathVariable String token) throws Exception {
         User user = userService.validateToken(token);
-        return UserDto.from(user);
+        return new ResponseEntity<>(UserDto.from(user),HttpStatus.OK);
     }
 
     @GetMapping("/users/{id}")

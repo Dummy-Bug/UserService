@@ -5,9 +5,14 @@ import org.springframework.stereotype.Service;
 import user.exception.UserNotFoundException;
 import user.model.Token;
 import user.model.User;
+import user.repository.TokenRepository;
 import user.repository.UserRepository;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -16,9 +21,12 @@ public class UserService {
 
     BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    TokenRepository tokenRepository;
+
+    UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, TokenRepository tokenRepository) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.tokenRepository = tokenRepository;
     }
 
     public User signUp(String email, String name, String password) {
@@ -42,20 +50,43 @@ public class UserService {
         if (!bCryptPasswordEncoder.matches(password, optionalUser.get().getHashedPassword())) {
             throw new Exception("password is incorrect");
         }
-        return Token.builder()
-                .value("Login Success")
-                .build();
+        Token token = generateToken(optionalUser.get());
+        return tokenRepository.save(token);
     }
 
     private Token generateToken(User user) {
-        return null;
+        LocalDate currentDate = LocalDate.now();
+        LocalDate thirtyDaysLater = currentDate.plusDays(30);
+
+        Date expiryDate = Date.from(thirtyDaysLater.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        return Token.builder()
+                .value(UUID.randomUUID().toString())
+                .user(user)
+                .expiryAt(expiryDate)
+                .build();
     }
 
-    public void logout(String tokenValue) {
+    public void logout(String tokenValue) throws Exception {
+        Optional<Token> optionalToken = tokenRepository.findByValueAndDeleted(tokenValue, false);
 
+        if (optionalToken.isEmpty()) {
+            throw new Exception("not able to logout please try again");
+        }
+
+        Token token = optionalToken.get();
+        token.setDeleted(true);
+        tokenRepository.save(token);
     }
 
-    public User validateToken(String token) {
-        return null;
+    public User validateToken(String token) throws Exception {
+        Optional<Token> optionalToken = tokenRepository.findByValueAndDeletedAndExpiryAtGreaterThan(token, false, new Date());
+
+        if (optionalToken.isEmpty()) {
+            System.out.println("Token is Invalid");
+            throw new Exception("Invalid Token");
+        }
+        System.out.println("Token is valid");
+        return optionalToken.get().getUser();
     }
 }
