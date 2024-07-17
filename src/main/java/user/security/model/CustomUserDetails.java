@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
 import user.model.Role;
 import user.model.User;
 
@@ -16,6 +17,7 @@ import java.util.List;
 @JsonDeserialize
 @Getter
 @Setter
+@Service
 //This CustomUserDetails class will act like a User class for Spring Security.
 public class CustomUserDetails implements UserDetails {
     private String username;
